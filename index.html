@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,10 +12,16 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #dceeff; }
+    .debug { font-size: 0.9em; color: #444; margin-bottom: 10px; }
   </style>
 </head>
 <body>
   <h1>Mega Metais - Catálogo de Produtos</h1>
+
+  <div class="debug">
+    <strong>Backend API:</strong>
+    <input type="text" id="apiUrl" value="https://mega-metais-backend.onrender.com" style="width:100%;" />
+  </div>
 
   <form id="productForm" enctype="multipart/form-data">
     <input type="text" id="codigo" placeholder="Código" required />
@@ -47,7 +52,9 @@
   </table>
 
   <script>
-    const apiUrl = "https://mega-metais-backend.onrender.com";
+    function getApiUrl() {
+      return document.getElementById("apiUrl").value.trim();
+    }
 
     document.getElementById("productForm").addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -56,48 +63,61 @@
       const formData = new FormData();
       formData.append("imagem", imagemInput.files[0]);
 
-      const uploadRes = await fetch(`${apiUrl}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      try {
+        const uploadRes = await fetch(`${getApiUrl()}/upload`, {
+          method: "POST",
+          body: formData,
+        });
 
-      const uploadData = await uploadRes.json();
-      const imagem_url = uploadData.url;
+        const uploadData = await uploadRes.json();
+        const imagem_url = uploadData.url;
 
-      const codigo = document.getElementById("codigo").value;
-      const descricao = document.getElementById("descricao").value;
-      const valor = parseFloat(document.getElementById("valor").value);
-      const categoria = document.getElementById("categoria").value;
+        const codigo = document.getElementById("codigo").value;
+        const descricao = document.getElementById("descricao").value;
+        const valor = parseFloat(document.getElementById("valor").value);
+        const categoria = document.getElementById("categoria").value;
 
-      const body = { codigo, descricao, valor, imagem_url, categoria };
+        const body = { codigo, descricao, valor, imagem_url, categoria };
+        console.log("Enviando dados:", body);
 
-      await fetch(`${apiUrl}/produtos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+        const res = await fetch(`${getApiUrl()}/produtos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
 
-      document.getElementById("productForm").reset();
-      loadProdutos();
+        const result = await res.json();
+        console.log("Resposta do servidor:", result);
+
+        document.getElementById("productForm").reset();
+        loadProdutos();
+      } catch (err) {
+        console.error("Erro ao cadastrar:", err);
+        alert("Erro ao cadastrar o produto. Veja o console (F12).");
+      }
     });
 
     async function loadProdutos() {
-      const res = await fetch(`${apiUrl}/produtos`);
-      const produtos = await res.json();
+      try {
+        const res = await fetch(`${getApiUrl()}/produtos`);
+        const produtos = await res.json();
 
-      const tbody = document.querySelector("#productTable tbody");
-      tbody.innerHTML = "";
-      produtos.forEach((p) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${p.codigo}</td>
-          <td>${p.descricao}</td>
-          <td>R$ ${p.valor.toFixed(2)}</td>
-          <td><img src="${p.imagem_url}" width="50" /></td>
-          <td>${p.categoria}</td>
-        `;
-        tbody.appendChild(row);
-      });
+        const tbody = document.querySelector("#productTable tbody");
+        tbody.innerHTML = "";
+        produtos.forEach((p) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${p.codigo}</td>
+            <td>${p.descricao}</td>
+            <td>R$ ${p.valor.toFixed(2)}</td>
+            <td><img src="${p.imagem_url}" width="50" /></td>
+            <td>${p.categoria}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar produtos:", err);
+      }
     }
 
     loadProdutos();

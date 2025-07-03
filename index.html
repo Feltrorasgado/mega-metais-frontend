@@ -9,7 +9,7 @@
     body { font-family: sans-serif; background: #e9f2ff; padding: 20px; }
     h1 { color: #154c8c; }
     form { margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; }
-    input, textarea, select { display: block; margin-bottom: 10px; padding: 8px; width: 100%; }
+    input, select { display: block; margin-bottom: 10px; padding: 8px; width: 100%; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #dceeff; }
@@ -18,11 +18,11 @@
 <body>
   <h1>Mega Metais - Catálogo de Produtos</h1>
 
-  <form id="productForm">
+  <form id="productForm" enctype="multipart/form-data">
     <input type="text" id="codigo" placeholder="Código" required />
     <input type="text" id="descricao" placeholder="Descrição" required />
     <input type="number" id="valor" placeholder="Valor unitário" required step="0.01" />
-    <input type="text" id="imagem_url" placeholder="URL da imagem" />
+    <input type="file" id="imagem" accept="image/*" required />
     <select id="categoria" required>
       <option value="">Selecione a categoria</option>
       <option value="Linha Premium">Linha Premium</option>
@@ -52,10 +52,21 @@
     document.getElementById("productForm").addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      const imagemInput = document.getElementById("imagem");
+      const formData = new FormData();
+      formData.append("imagem", imagemInput.files[0]);
+
+      const uploadRes = await fetch(`${apiUrl}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+      const imagem_url = uploadData.url;
+
       const codigo = document.getElementById("codigo").value;
       const descricao = document.getElementById("descricao").value;
       const valor = parseFloat(document.getElementById("valor").value);
-      const imagem_url = document.getElementById("imagem_url").value;
       const categoria = document.getElementById("categoria").value;
 
       const body = { codigo, descricao, valor, imagem_url, categoria };
@@ -66,6 +77,7 @@
         body: JSON.stringify(body),
       });
 
+      document.getElementById("productForm").reset();
       loadProdutos();
     });
 
@@ -92,3 +104,4 @@
   </script>
 </body>
 </html>
+

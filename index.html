@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mega Metais - Catálogo</title>
+  <style>
+    body { font-family: sans-serif; background: #e9f2ff; padding: 20px; }
+    h1 { color: #154c8c; }
+    form { margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; }
+    input, textarea, select { display: block; margin-bottom: 10px; padding: 8px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #dceeff; }
+  </style>
+</head>
+<body>
+  <h1>Mega Metais - Catálogo de Produtos</h1>
+
+  <form id="productForm">
+    <input type="text" id="codigo" placeholder="Código" required />
+    <input type="text" id="descricao" placeholder="Descrição" required />
+    <input type="number" id="valor" placeholder="Valor unitário" required step="0.01" />
+    <input type="text" id="imagem_url" placeholder="URL da imagem" />
+    <select id="categoria" required>
+      <option value="">Selecione a categoria</option>
+      <option value="Linha Premium">Linha Premium</option>
+      <option value="Linha Luxo">Linha Luxo</option>
+      <option value="Linha Clássica">Linha Clássica</option>
+    </select>
+    <button type="submit">Cadastrar Produto</button>
+  </form>
+
+  <h2>Produtos Cadastrados</h2>
+  <table id="productTable">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Imagem</th>
+        <th>Categoria</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const apiUrl = "https://mega-metais-backend.onrender.com";
+
+    document.getElementById("productForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const codigo = document.getElementById("codigo").value;
+      const descricao = document.getElementById("descricao").value;
+      const valor = parseFloat(document.getElementById("valor").value);
+      const imagem_url = document.getElementById("imagem_url").value;
+      const categoria = document.getElementById("categoria").value;
+
+      const body = { codigo, descricao, valor, imagem_url, categoria };
+
+      await fetch(`${apiUrl}/produtos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      loadProdutos();
+    });
+
+    async function loadProdutos() {
+      const res = await fetch(`${apiUrl}/produtos`);
+      const produtos = await res.json();
+
+      const tbody = document.querySelector("#productTable tbody");
+      tbody.innerHTML = "";
+      produtos.forEach((p) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${p.codigo}</td>
+          <td>${p.descricao}</td>
+          <td>R$ ${p.valor.toFixed(2)}</td>
+          <td><img src="${p.imagem_url}" width="50" /></td>
+          <td>${p.categoria}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    loadProdutos();
+  </script>
+</body>
+</html>
